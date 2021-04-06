@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using BackEnd;
 
 public class Game : MonoBehaviour
 {
@@ -30,11 +31,13 @@ public class Game : MonoBehaviour
     #region Monobehaviour Default Callback
     private void Start()
     {
+        InitBackend();
         SetState(State.Ready);
     }
 
     private void Update()
     {
+        Backend.AsyncPoll();
         if (m_state == State.Ready)
         {
             m_showTextSeconds += Time.deltaTime;
@@ -67,6 +70,22 @@ public class Game : MonoBehaviour
     #endregion
 
     #region Private Method
+    private void InitBackend()
+    {
+        Backend.InitializeAsync(true, callback => {
+            if (callback.IsSuccess())
+            {
+                // 초기화 성공 시 로직
+                Debug.LogWarning("suc");
+            }
+            else
+            {
+                Debug.LogWarning("fail");
+                // 초기화 실패 시 로직
+            }
+        });
+    }
+
     private void SetState(State state)
     {
         m_state = state;
