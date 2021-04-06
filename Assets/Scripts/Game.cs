@@ -6,7 +6,9 @@ public class Game : MonoBehaviour
 {
     private enum State
     {
-        Ready = 0,
+        None = 0,
+        Title,
+        Ready,
         Play,
         Result,
     }
@@ -15,6 +17,7 @@ public class Game : MonoBehaviour
     private static readonly float kGameTime = 5.0f;
 
     #region UI Members
+    [SerializeField] private GameObject m_panelTitle = null;
     [SerializeField] private GameObject m_panelReady = null;
     [SerializeField] private GameObject m_panelResult = null;
     [SerializeField] private Text m_time = null;
@@ -22,7 +25,7 @@ public class Game : MonoBehaviour
     #endregion
 
     #region Variable Members
-    private State m_state = State.Ready;
+    private State m_state = State.None;
     private float m_showTextSeconds = 0.0f;
     private float m_remainSeconds = 0.0f;
     private int m_numClicks = 0;
@@ -32,7 +35,7 @@ public class Game : MonoBehaviour
     private void Start()
     {
         InitBackend();
-        SetState(State.Ready);
+        SetState(State.Title);
     }
 
     private void Update()
@@ -89,10 +92,17 @@ public class Game : MonoBehaviour
     private void SetState(State state)
     {
         m_state = state;
-        if (m_state == State.Ready)
+        if (m_state == State.Title)
+        {
+            m_panelTitle.SetActive(true);
+        }
+        else if (m_state == State.Ready)
         {
             m_remainSeconds = kGameTime;
             m_numClicks = 0;
+            m_time.text = m_remainSeconds.ToString();
+            m_score.text = m_numClicks.ToString();
+
             m_showTextSeconds = 0;
             m_panelResult.SetActive(false);
             m_panelReady.SetActive(true);
@@ -109,12 +119,26 @@ public class Game : MonoBehaviour
     #endregion
 
     #region Public Method
-    public void OnClickButton()
+    public void OnClickButton(Button btn)
     {
-        if (m_state == State.Play)
-            m_numClicks++;
+        if (m_state == State.Title)
+        {
+            if (btn.name.Equals("ButtonStart"))
+            {
+                m_panelTitle.SetActive(false);
+                SetState(State.Ready);
+            }
+        }
+        else if (m_state == State.Play)
+        {
+            if (btn.name.Equals("ButtonGame"))
+                m_numClicks++;
+        }
         else if (m_state == State.Result)
-            SetState(State.Ready);
+        {
+            if (btn.name.Equals("ButtonResult") )
+                SetState(State.Ready);
+        }
     }
     #endregion
 }
