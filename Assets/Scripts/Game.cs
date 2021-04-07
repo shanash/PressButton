@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 using System.Collections.Generic;
 using BackEnd; 
 
@@ -22,6 +23,8 @@ public class Game : MonoBehaviour
     #endregion
 
     #region UI Members
+    [SerializeField] private GameObject m_panelLoading = null;
+
     [SerializeField] private GameObject m_panelTitle = null;
     [SerializeField] private GameObject m_panelReady = null;
 
@@ -37,6 +40,8 @@ public class Game : MonoBehaviour
     #endregion
 
     #region Variable Members
+    private bool m_isLogin = false;
+
     private State m_state = State.None;
     private float m_showTextSeconds = 0.0f;
     private float m_remainSeconds = 0.0f;
@@ -48,13 +53,14 @@ public class Game : MonoBehaviour
     #region Monobehaviour Callback
     private void Start()
     {
-        InitBackend();
+        StartCoroutine(InitProcessForBackend());
         SetState(State.Title);
     }
 
     private void Update()
     {
         Backend.AsyncPoll();
+        
         if (m_state == State.Ready)
         {
             m_showTextSeconds += Time.deltaTime;
@@ -79,16 +85,24 @@ public class Game : MonoBehaviour
             m_time.text = m_remainSeconds.ToString();
             m_score.text = m_numClicks.ToString();
         }
-        else if (m_state == State.Result)
-        {
-
-        }
     }
     #endregion
 
     #region Private Method
-    private void InitBackend()
+    private IEnumerator InitProcessForBackend()
     {
+        m_panelLoading.SetActive(true);
+
+        yield return InitAsync();
+        yield return Login();
+
+        m_panelLoading.SetActive(false);
+    }
+
+    private IEnumerator InitAsync()
+    {
+        bool isEndProcess = false;
+
         Backend.InitializeAsync(true, callback => {
             if (callback.IsSuccess())
             {
@@ -100,7 +114,33 @@ public class Game : MonoBehaviour
                 Debug.LogWarning("fail");
                 // 초기화 실패 시 로직
             }
+            
+            isEndProcess = true;
         });
+
+        yield return new WaitUntil(() => isEndProcess);
+    }
+
+    private IEnumerator Login()
+    {
+        bool isEndProcess = false;
+        
+        Backend.BMember.GuestLogin("Login By Guest", callback =>
+        {
+            Debug.Log("게스트 로그인에 성공했습니다");
+            Debug.Log("로컬 기기에 저장된 아이디 :" + Backend.BMember.GetGuestID());
+            m_panelLoading.SetActive(false);
+
+            string inDate = Backend.UserInDate;
+            string nickName = Backend.UserNickName;
+
+            Debug.Log("inDate : " + inDate);
+            Debug.Log("nickName : " + nickName);
+            isEndProcess = true;
+            m_isLogin = true;
+        });
+
+        yield return new WaitUntil(() => isEndProcess);
     }
 
     private void SetState(State state)
@@ -139,6 +179,8 @@ public class Game : MonoBehaviour
     {
         if (m_state == State.Title)
         {
+            if (!m_isLogin) return;
+
             if (btn.name.Equals("ButtonStart"))
             {
                 m_panelTitle.SetActive(false);
