@@ -1,9 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
-using BackEnd;
+using System.Collections.Generic;
+using BackEnd; 
 
 public class Game : MonoBehaviour
 {
+    #region Defines
     private enum State
     {
         None = 0,
@@ -12,16 +14,26 @@ public class Game : MonoBehaviour
         Play,
         Result,
     }
+    #endregion
 
+    #region Constants
     private static readonly float kShowReadyTextSeconds = 1.0f;
     private static readonly float kGameTime = 5.0f;
+    #endregion
 
     #region UI Members
     [SerializeField] private GameObject m_panelTitle = null;
     [SerializeField] private GameObject m_panelReady = null;
-    [SerializeField] private GameObject m_panelResult = null;
+
     [SerializeField] private Text m_time = null;
     [SerializeField] private Text m_score = null;
+
+    [SerializeField] private GameObject m_panelResult = null;
+    [SerializeField] private GameObject m_inputResult = null;
+    [SerializeField] private GameObject m_rank = null;
+    [SerializeField] private Text m_baseRankText = null;
+    private List<Text> m_texts = new List<Text>(); // 사본
+    [SerializeField] private InputField m_inputNick = null;
     #endregion
 
     #region Variable Members
@@ -29,9 +41,11 @@ public class Game : MonoBehaviour
     private float m_showTextSeconds = 0.0f;
     private float m_remainSeconds = 0.0f;
     private int m_numClicks = 0;
+
+    private Dictionary<string, int> m_records = new Dictionary<string, int>();
     #endregion
 
-    #region Monobehaviour Default Callback
+    #region Monobehaviour Callback
     private void Start()
     {
         InitBackend();
@@ -114,6 +128,8 @@ public class Game : MonoBehaviour
         else if (m_state == State.Result)
         {
             m_panelResult.SetActive(true);
+            m_inputResult.SetActive(true);
+            m_rank.SetActive(false);
         }
     }
     #endregion
@@ -136,8 +152,30 @@ public class Game : MonoBehaviour
         }
         else if (m_state == State.Result)
         {
-            if (btn.name.Equals("ButtonResult") )
+            if (btn.name.Equals("ButtonNick"))
+            {
+                m_records.Add(m_inputNick.text, m_numClicks);
+                m_inputResult.SetActive(false);
+                m_rank.SetActive(true);
+
+                int index = 0;
+                foreach(KeyValuePair<string, int> pair in m_records)
+                {
+                    if (m_texts.Count == index)
+                    {
+                        Text copy = Instantiate(m_baseRankText, m_baseRankText.transform.parent);
+                        copy.gameObject.SetActive(true);
+                        m_texts.Add(copy);
+                    }
+                    m_texts[index].text = pair.Key + " : " + pair.Value;
+
+                    index++;
+                }
+            }
+            if (btn.name.Equals("ButtonResult"))
+            {
                 SetState(State.Ready);
+            }
         }
     }
     #endregion
