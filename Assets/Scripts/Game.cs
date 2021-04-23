@@ -28,6 +28,7 @@ namespace ToyLets.PressButton
         [SerializeField] private GameObject m_panelLoading = null;
 
         [SerializeField] private GameObject m_panelTitle = null;
+        [SerializeField] private Animator m_animatorTitle = null;
         [SerializeField] private GameObject m_panelReady = null;
 
         [SerializeField] private Text m_time = null;
@@ -99,6 +100,8 @@ namespace ToyLets.PressButton
             yield return Login();
 
             m_panelLoading.SetActive(false);
+
+            m_animatorTitle.enabled = true;
         }
 
         private IEnumerator InitAsync()
@@ -114,8 +117,8 @@ namespace ToyLets.PressButton
                 }
                 else
                 {
-                    Debug.LogWarning("fail");
                     // 초기화 실패 시 로직
+                    Debug.LogWarning("fail");
                 }
 
                 isEndProcess = true;
@@ -130,7 +133,6 @@ namespace ToyLets.PressButton
 
             Backend.BMember.GuestLogin("Login By Guest", callback =>
             {
-                Debug.Log("게스트 로그인에 성공했습니다");
                 Debug.Log("로컬 기기에 저장된 아이디 :" + Backend.BMember.GetGuestID());
                 m_panelLoading.SetActive(false);
 
